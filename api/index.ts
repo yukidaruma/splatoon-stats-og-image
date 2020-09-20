@@ -4,22 +4,29 @@ import { getScreenshot } from './_lib/chromium';
 import { getHtml } from './_lib/template';
 
 const isDev = !process.env.AWS_REGION;
-const isHtmlDebug = process.env.OG_HTML_DEBUG === '1';
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
     try {
+        if (req.url?.endsWith('favicon.ico')) {
+            res.statusCode = 404;
+            res.end();
+            return;
+        }
+
         const parsedReq = parseRequest(req);
-        const html = getHtml(parsedReq);
-        if (isHtmlDebug) {
+        const html = await getHtml(parsedReq);
+
+        if (parsedReq.html) {
             res.setHeader('Content-Type', 'text/html');
             res.end(html);
             return;
         }
-        const { fileType } = parsedReq;
-        const file = await getScreenshot(html, fileType, isDev);
+
+        const file = await getScreenshot(html, isDev);
+
         res.statusCode = 200;
-        res.setHeader('Content-Type', `image/${fileType}`);
-        res.setHeader('Cache-Control', `public, immutable, no-transform, s-maxage=31536000, max-age=31536000`);
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Cache-Control', `public, no-transform, s-maxage=${86400}, max-age=${86400}`);
         res.end(file);
     } catch (e) {
         res.statusCode = 500;

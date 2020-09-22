@@ -63,6 +63,9 @@ function getCss(): string {
         font-weight: bold;
         padding-left: 30px;
         border-left: 18px solid;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
     }
     .heading.x {
         border-left-color: rgb(249, 114, 7);
@@ -124,6 +127,10 @@ function getCss(): string {
             0px  2px 1px ${dark},
             -2px  0px 1px ${dark},
             0px -2px 1px ${dark};
+    }
+
+    .subtitle {
+        font-size: 80%;
     }`;
 }
 
@@ -237,9 +244,9 @@ async function getPlayerContent(id: string): Promise<string> {
 
     const weaponUsage = sumObjectsByKey(xAggregated.weapons, leagueAggregated.weapons);
     const categories = [
-        ['x-powers', 'X', xAggregated],
-        ['league-powers', 'League', leagueAggregated],
-    ] as Array<[string, string, ReturnType<typeof aggregateRule>]>;
+        ['x-powers', 'X', xAggregated, () => `${xRecords.length}`],
+        ['league-powers', 'League', leagueAggregated, () => `${leagueRecords.length}`],
+    ] as Array<[string, string, ReturnType<typeof aggregateRule>, (() => string)?]>;
 
     return `
     <div id="data">
@@ -249,9 +256,12 @@ async function getPlayerContent(id: string): Promise<string> {
         </div>
     </div>
     <div id="powers">
-        ${categories.map(([id, heading, category]) => `
+        ${categories.map(([id, heading, category, subtitle]) => `
         <div id="${id}">
-            <div class="heading ${heading.toLowerCase()}">${heading}</div>
+            <div class="heading ${heading.toLowerCase()}">
+                <span class="title">${heading}</span>
+                ${subtitle ? `<span class="subtitle">${subtitle()}</span>` : ''}
+            </div>
             <table>
             ${ruleIds.map((rule) => `
                 <tr>
